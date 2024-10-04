@@ -1,0 +1,39 @@
+This is a short explanation of how the PWM reading works.
+It will explain the code in chronological order. The technical
+details won't be completely correct, but good enough to be able to use it.
+
+First, hardware interrupts are caused by a seperate processor from the main cpu
+that "guards" a pin according to a certain instruction. When it detects
+what it has been told to detect it "tells" the main cpu to stop what it's doing
+and run a specific function (the InterruptServiceRoutine, ISR). The main cpu stops whatever it's doing and runs the
+function, after which it continues from where it paused. Importantly, it does not
+reboot or restart anything, but the loop just continues.
+
+This means that if we have infrequent and short enough breaks the main loop will 
+practically be unaffected.
+
+
+The code:
+- First, the pin to detect is declared.
+- Then variables to calculate and store the pulse width are declared. These
+    must be volatile, otherwise the ISR function wont be able to update them. Also,
+    the variable for storing when the pulse started should be "unsigned long" to
+    be able to store the values from micros().
+- The min and max pulse widths are declared. This isn't technically needed
+    but it's probably a good idea so you don't get any weird values that mess
+    up something later on.
+
+- The ISR function is defined. It works by first checking if the pulse started or ended.
+    If the pin is high, that means that the pulse has just started. By using micros(), a 
+    kind of timestamp is saved of when the pulse started. The main processor goes back to the main loop until
+    next interrupt. When a new interrupt comes the same check is done. When a low state is detected 
+    it means that the pulse just ended. By taking the current timestamp and subtracting
+    the timestamp where the pulse started, the pulse width is calculated.
+
+- In the setup the hardware interrupt is initiated. The interrupt system is instructed which pin
+    to listen to, what funtion to tell the main processor to run on interrupt, and what to detect (it can be 
+    the start of a signal - RISING, the end of a signal - FALLING, and any change - CHANGE)
+
+- The loop gets run as usual. No need to call the ISR function as the hardware interrupt does
+    that by itself. The loop will run as usual but everytime the ISR runs the values that are used
+    in the loop are updated.
