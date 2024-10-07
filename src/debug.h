@@ -1,8 +1,10 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
+#include <Arduino.h>
 #include "pins.h"
 #include "variables.h"
+#include "calculatedValues.h"
 
 void debug(){
   Serial.print("Throttle value/amount/out: ");
